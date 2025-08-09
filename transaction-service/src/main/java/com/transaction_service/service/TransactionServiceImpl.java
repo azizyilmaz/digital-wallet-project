@@ -1,68 +1,75 @@
 package com.transaction_service.service;
 
 import com.transaction_service.client.WalletServiceClient;
-import com.transaction_service.dto.TransactionRequest;
+import com.transaction_service.dto.TransactionDto;
 import com.transaction_service.dto.WalletDto;
 import com.transaction_service.enums.TransactionStatus;
 import com.transaction_service.enums.TransactionType;
 import com.transaction_service.exception.BadRequestException;
 import com.transaction_service.exception.ConflictException;
 import com.transaction_service.exception.NotFoundException;
+import com.transaction_service.mapper.TransactionMapper;
 import com.transaction_service.model.Transaction;
 import com.transaction_service.repository.TransactionRepository;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
     private static final BigDecimal THRESHOLD = new BigDecimal("1000");
     private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
     private final WalletServiceClient walletServiceClient;
+
+    public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper, WalletServiceClient walletServiceClient) {
+        this.transactionRepository = transactionRepository;
+        this.transactionMapper = transactionMapper;
+        this.walletServiceClient = walletServiceClient;
+    }
 
     @Override
     @Transactional
-    public Transaction deposit(TransactionRequest request) {
-        validateAmount(request.getAmount());
+    public TransactionDto deposit(TransactionDto dto) {
+        validateAmount(dto.getAmount());
 
-        WalletDto wallet = walletServiceClient.getWalletById(request.getWalletId());
+        WalletDto wallet = walletServiceClient.getWalletById(dto.getWalletId());
         if (wallet == null) {
-            throw new NotFoundException("Wallet not found for wallet id: " + request.getWalletId());
+            throw new NotFoundException("Wallet not found for wallet id: " + dto.getWalletId());
         }
 
-        TransactionStatus status = request.getAmount().compareTo(THRESHOLD) > 0 ? TransactionStatus.PENDING : TransactionStatus.APPROVED;
+        TransactionStatus status = dto.getAmount().compareTo(THRESHOLD) > 0 ? TransactionStatus.PENDING : TransactionStatus.APPROVED;
 
-        Transaction tx = Transaction.builder().iban(request.getIban()).walletId(request.getWalletId()).type(TransactionType.DEPOSIT).amount(request.getAmount()).status(status).createdAt(LocalDateTime.now()).description(request.getDescription()).build();
+        Transaction tx = Transaction.builder().iban(dto.getIban()).walletId(dto.getWalletId()).type(TransactionType.DEPOSIT).amount(dto.getAmount()).status(status).createdAt(LocalDateTime.now()).description(dto.getDescription()).build();
 
         tx = transactionRepository.save(tx);
 
         // Wallet update
         if (status == TransactionStatus.APPROVED) {
             // increase balance and usableBalance
-            walletServiceClient.updateBalance(wallet.getId(), request.getAmount(), request.getAmount());
+            walletServiceClient.updateBalance(wallet.getId(), dto.getAmount(), dto.getAmount());
         } else {
             // PENDING -> increase just balance, not usableBalance
-            walletServiceClient.updateBalance(wallet.getId(), request.getAmount(), BigDecimal.ZERO);
+            walletServiceClient.updateBalance(wallet.getId(), dto.getAmount(), BigDecimal.ZERO);
         }
 
         tx.setUpdatedAt(LocalDateTime.now());
-        return transactionRepository.save(tx);
+        return transactionMapper.toDto(transactionRepository.save(tx));
     }
 
     @Override
     @Transactional
-    public Transaction withdraw(TransactionRequest request) {
-        validateAmount(request.getAmount());
+    public TransactionDto withdraw(TransactionDto dto) {
+        validateAmount(dto.getAmount());
 
-        WalletDto wallet = walletServiceClient.getWalletById(request.getWalletId());
+        WalletDto wallet = walletServiceClient.getWalletById(dto.getWalletId());
         if (wallet == null) {
-            throw new NotFoundException("Wallet not found for wallet id: " + request.getWalletId());
+            throw new NotFoundException("Wallet not found for wallet id: " + dto.getWalletId());
         }
 
         // Active control
@@ -71,31 +78,31 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         // UsableBalance balance control
-        if (wallet.getUsableBalance().compareTo(request.getAmount()) < 0) {
+        if (wallet.getUsableBalance().compareTo(dto.getAmount()) < 0) {
             throw new BadRequestException("Insufficient usable balance.");
         }
 
-        TransactionStatus status = request.getAmount().compareTo(THRESHOLD) > 0 ? TransactionStatus.PENDING : TransactionStatus.APPROVED;
+        TransactionStatus status = dto.getAmount().compareTo(THRESHOLD) > 0 ? TransactionStatus.PENDING : TransactionStatus.APPROVED;
 
-        Transaction tx = Transaction.builder().iban(request.getIban()).walletId(request.getWalletId()).type(TransactionType.WITHDRAW).amount(request.getAmount()).status(status).createdAt(LocalDateTime.now()).description(request.getDescription()).build();
+        Transaction tx = Transaction.builder().iban(dto.getIban()).walletId(dto.getWalletId()).type(TransactionType.WITHDRAW).amount(dto.getAmount()).status(status).createdAt(LocalDateTime.now()).description(dto.getDescription()).build();
 
         tx = transactionRepository.save(tx);
 
         if (status == TransactionStatus.APPROVED) {
             // Descrease balance and usableBalance
-            walletServiceClient.updateBalance(wallet.getId(), request.getAmount().negate(), request.getAmount().negate());
+            walletServiceClient.updateBalance(wallet.getId(), dto.getAmount().negate(), dto.getAmount().negate());
         } else {
             // PENDING -> Decrease just usableBalance, not normal balance
-            walletServiceClient.updateBalance(wallet.getId(), BigDecimal.ZERO, request.getAmount().negate());
+            walletServiceClient.updateBalance(wallet.getId(), BigDecimal.ZERO, dto.getAmount().negate());
         }
 
         tx.setUpdatedAt(LocalDateTime.now());
-        return transactionRepository.save(tx);
+        return transactionMapper.toDto(transactionRepository.save(tx));
     }
 
     @Override
     @Transactional
-    public Transaction approve(Long transactionId) {
+    public TransactionDto approve(Long transactionId) {
         Transaction tx = transactionRepository.findById(transactionId).orElseThrow(() -> new NotFoundException("Transaction not found: " + transactionId));
 
         if (tx.getStatus() == TransactionStatus.APPROVED) {
@@ -116,12 +123,12 @@ public class TransactionServiceImpl implements TransactionService {
 
         tx.setStatus(TransactionStatus.APPROVED);
         tx.setUpdatedAt(LocalDateTime.now());
-        return transactionRepository.save(tx);
+        return transactionMapper.toDto(transactionRepository.save(tx));
     }
 
     @Override
     @Transactional
-    public Transaction reject(Long transactionId) {
+    public TransactionDto reject(Long transactionId) {
         Transaction tx = transactionRepository.findById(transactionId).orElseThrow(() -> new NotFoundException("Transaction not found: " + transactionId));
 
         if (tx.getStatus() == TransactionStatus.REJECTED) {
@@ -145,12 +152,13 @@ public class TransactionServiceImpl implements TransactionService {
 
         tx.setStatus(TransactionStatus.REJECTED);
         tx.setUpdatedAt(LocalDateTime.now());
-        return transactionRepository.save(tx);
+        return transactionMapper.toDto(transactionRepository.save(tx));
     }
 
     @Override
-    public List<Transaction> listByIban(String iban) {
-        return transactionRepository.findByIbanOrderByCreatedAtDesc(iban);
+    public List<TransactionDto> listByIban(String iban) {
+        List<Transaction> transactions = transactionRepository.findByIbanOrderByCreatedAtDesc(iban);
+        return transactions.stream().map(transactionMapper::toDto).collect(Collectors.toList());
     }
 
     private void validateAmount(java.math.BigDecimal amount) {

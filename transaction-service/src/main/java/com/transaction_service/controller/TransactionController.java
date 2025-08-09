@@ -1,55 +1,50 @@
 package com.transaction_service.controller;
 
-import com.transaction_service.dto.TransactionRequest;
-import com.transaction_service.dto.TransactionResponse;
-import com.transaction_service.model.Transaction;
+import com.transaction_service.dto.TransactionDto;
 import com.transaction_service.service.TransactionService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/transactions")
-@RequiredArgsConstructor
 public class TransactionController {
 
     private final TransactionService transactionService;
 
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
+
     @PostMapping("/deposit")
-    public ResponseEntity<TransactionResponse> deposit(@RequestBody TransactionRequest request) {
-        Transaction tx = transactionService.deposit(request);
-        return ResponseEntity.ok(map(tx));
+    @ResponseStatus(HttpStatus.CREATED)
+    public TransactionDto deposit(@RequestBody TransactionDto dto) {
+        return transactionService.deposit(dto);
     }
 
     @PostMapping("/withdraw")
-    public ResponseEntity<TransactionResponse> withdraw(@RequestBody TransactionRequest request) {
-        Transaction tx = transactionService.withdraw(request);
-        return ResponseEntity.ok(map(tx));
+    @ResponseStatus(HttpStatus.CREATED)
+    public TransactionDto withdraw(@RequestBody TransactionDto dto) {
+        return transactionService.withdraw(dto);
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<TransactionResponse> approve(@PathVariable Long id) {
-        Transaction tx = transactionService.approve(id);
-        return ResponseEntity.ok(map(tx));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<TransactionDto> approve(@PathVariable Long id) {
+        return ResponseEntity.ok(transactionService.approve(id));
     }
 
     @PostMapping("/{id}/reject")
-    public ResponseEntity<TransactionResponse> reject(@PathVariable Long id) {
-        Transaction tx = transactionService.reject(id);
-        return ResponseEntity.ok(map(tx));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ResponseEntity<TransactionDto> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(transactionService.reject(id));
     }
 
-    @GetMapping
-    public ResponseEntity<List<TransactionResponse>> listByIban(@RequestParam("iban") String iban) {
-        List<Transaction> list = transactionService.listByIban(iban);
-        List<TransactionResponse> resp = list.stream().map(this::map).collect(Collectors.toList());
-        return ResponseEntity.ok(resp);
+    @GetMapping("/filter")
+    public List<TransactionDto> listByIban(@RequestParam(name = "iban") String iban) {
+        return transactionService.listByIban(iban);
     }
 
-    private TransactionResponse map(Transaction tx) {
-        return TransactionResponse.builder().id(tx.getId()).iban(tx.getIban()).type(tx.getType()).amount(tx.getAmount()).status(tx.getStatus()).createdAt(tx.getCreatedAt()).updatedAt(tx.getUpdatedAt()).description(tx.getDescription()).build();
-    }
 }

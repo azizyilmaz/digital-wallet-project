@@ -1,19 +1,18 @@
 package com.transaction_service.service;
 
-import com.transaction_service.dto.TransactionRequest;
-import com.transaction_service.model.Transaction;
+import com.transaction_service.dto.TransactionDto;
 
 import java.util.List;
 
 public interface TransactionService {
-    
-    Transaction deposit(TransactionRequest request);
 
-    Transaction withdraw(TransactionRequest request);
+    TransactionDto deposit(TransactionDto request);
 
-    Transaction approve(Long transactionId);
+    TransactionDto withdraw(TransactionDto request);
 
-    Transaction reject(Long transactionId);
+    TransactionDto approve(Long transactionId);
 
-    List<Transaction> listByIban(String iban);
+    TransactionDto reject(Long transactionId);
+
+    List<TransactionDto> listByIban(String iban);
 }

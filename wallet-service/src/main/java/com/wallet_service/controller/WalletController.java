@@ -39,7 +39,7 @@ public class WalletController {
         return walletService.getWalletsByCustomerAndFilter(customerId, currency, minAmount, maxAmount);
     }
 
-    @GetMapping("/iban/{iban}")
+    @GetMapping("/id/{id}")
     public ResponseEntity<WalletDto> getWalletById(@PathVariable Long id) {
         return ResponseEntity.ok(walletService.getWalletById(id));
     }

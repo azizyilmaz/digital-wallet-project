@@ -18,7 +18,8 @@ import java.util.Collections;
 import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class WalletControllerTest {
 
@@ -49,9 +50,7 @@ public class WalletControllerTest {
 
         Mockito.when(walletService.getAllWallets()).thenReturn(Collections.singletonList(wallet));
 
-        mockMvc.perform(get("/api/wallets"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].walletName", is("Test Wallet")));
+        mockMvc.perform(get("/api/wallets")).andExpect(status().isOk()).andExpect(jsonPath("$[0].walletName", is("Test Wallet")));
     }
 
     @Test
@@ -76,11 +75,6 @@ public class WalletControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/wallets")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(json))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.walletName", is("Test Wallet")))
-                .andExpect(jsonPath("$.currency", is("USD")));
+        mockMvc.perform(post("/api/wallets").contentType(MediaType.APPLICATION_JSON).content(json)).andExpect(status().isCreated()).andExpect(jsonPath("$.walletName", is("Test Wallet"))).andExpect(jsonPath("$.currency", is("USD")));
     }
 }
