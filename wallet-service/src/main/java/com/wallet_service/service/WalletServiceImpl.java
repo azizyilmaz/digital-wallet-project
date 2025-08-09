@@ -1,11 +1,11 @@
 package com.wallet_service.service;
 
+import com.wallet_service.dto.WalletDto;
+import com.wallet_service.exception.NotFoundException;
 import com.wallet_service.mapper.WalletMapper;
 import com.wallet_service.model.Wallet;
-import com.wallet_service.dto.WalletDto;
 import com.wallet_service.repository.WalletRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,10 +30,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     public List<WalletDto> getAllWallets() {
-        return walletRepository.findAll()
-                .stream()
-                .map(walletMapper::toDto)
-                .collect(Collectors.toList());
+        return walletRepository.findAll().stream().map(walletMapper::toDto).collect(Collectors.toList());
     }
 
     @Override
@@ -47,8 +44,30 @@ public class WalletServiceImpl implements WalletService {
             }
         }
         List<Wallet> wallets = walletRepository.findByFilters(customerId, currencyEnum, minAmount, maxAmount);
-        return wallets.stream()
-                .map(walletMapper::toDto)
-                .collect(Collectors.toList());
+        return wallets.stream().map(walletMapper::toDto).collect(Collectors.toList());
+    }
+
+    @Override
+    public WalletDto getWalletById(Long walletId) {
+        Wallet wallet = walletRepository.findById(walletId).orElseThrow(() -> new NotFoundException("Wallet not found for wallet id: " + walletId));
+        return walletMapper.toDto(wallet);
+    }
+
+    @Override
+    public void updateBalance(Long walletId, BigDecimal balanceChange, BigDecimal usableBalanceChange) {
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + walletId));
+
+        // balance change
+        if (balanceChange != null && balanceChange.compareTo(BigDecimal.ZERO) != 0) {
+            wallet.setBalance(wallet.getBalance().add(balanceChange));
+        }
+
+        // usableBalance change
+        if (usableBalanceChange != null && usableBalanceChange.compareTo(BigDecimal.ZERO) != 0) {
+            wallet.setUsableBalance(wallet.getUsableBalance().add(usableBalanceChange));
+        }
+
+        walletRepository.save(wallet);
     }
 }

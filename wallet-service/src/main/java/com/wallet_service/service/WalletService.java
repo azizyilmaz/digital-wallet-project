@@ -13,4 +13,8 @@ public interface WalletService {
 
     List<WalletDto> getWalletsByCustomerAndFilter(Long customerId, String currency, BigDecimal minAmount, BigDecimal maxAmount);
 
+    WalletDto getWalletById(Long id);
+
+    void updateBalance(Long walletId, BigDecimal balanceChange, BigDecimal usableBalanceChange);
+
 }
