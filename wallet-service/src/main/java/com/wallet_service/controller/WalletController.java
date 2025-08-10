@@ -31,25 +31,18 @@ public class WalletController {
     }
 
     @GetMapping("/filter")
-    public List<WalletDto> getWalletsByFilter(
-            @RequestParam(name = "customerId") Long customerId,
-            @RequestParam(name = "currency", required = false) String currency,
-            @RequestParam(name = "minAmount", required = false) BigDecimal minAmount,
-            @RequestParam(name = "maxAmount", required = false) BigDecimal maxAmount) {
+    public List<WalletDto> getWalletsByFilter(@RequestParam(name = "customerId") Long customerId, @RequestParam(name = "currency", required = false) String currency, @RequestParam(name = "minAmount", required = false) BigDecimal minAmount, @RequestParam(name = "maxAmount", required = false) BigDecimal maxAmount) {
         return walletService.getWalletsByCustomerAndFilter(customerId, currency, minAmount, maxAmount);
     }
 
     @GetMapping("/id/{id}")
-    public ResponseEntity<WalletDto> getWalletById(@PathVariable Long id) {
+    public ResponseEntity<WalletDto> getWalletById(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(walletService.getWalletById(id));
     }
 
     @PutMapping("/{walletId}/balance")
-    public ResponseEntity<Void> updateBalance(
-            @PathVariable Long walletId,
-            @RequestParam BigDecimal balanceChange,
-            @RequestParam BigDecimal availableBalanceChange) {
-        walletService.updateBalance(walletId, balanceChange, availableBalanceChange);
+    public ResponseEntity<Void> updateBalance(@PathVariable(name = "walletId") Long walletId, @RequestParam("balanceChange") BigDecimal balanceChange, @RequestParam("usableBalanceChange") BigDecimal usableBalanceChange) {
+        walletService.updateBalance(walletId, balanceChange, usableBalanceChange);
         return ResponseEntity.ok().build();
     }
 }

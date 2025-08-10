@@ -45,7 +45,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         TransactionStatus status = dto.getAmount().compareTo(THRESHOLD) > 0 ? TransactionStatus.PENDING : TransactionStatus.APPROVED;
 
-        Transaction tx = Transaction.builder().iban(dto.getIban()).walletId(dto.getWalletId()).type(TransactionType.DEPOSIT).amount(dto.getAmount()).status(status).createdAt(LocalDateTime.now()).description(dto.getDescription()).build();
+        Transaction tx = Transaction.builder().id(dto.getId()).iban(dto.getIban()).walletId(dto.getWalletId()).type(TransactionType.DEPOSIT).amount(dto.getAmount()).status(status).createdAt(LocalDateTime.now()).description(dto.getDescription()).build();
 
         tx = transactionRepository.save(tx);
 

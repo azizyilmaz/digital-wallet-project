@@ -54,10 +54,16 @@ public class Wallet {
     }
 
     public BigDecimal getBalance() {
+        if (balance == null) {
+            return BigDecimal.ZERO;
+        }
         return balance;
     }
 
     public BigDecimal getUsableBalance() {
+        if (usableBalance == null) {
+            return BigDecimal.ZERO;
+        }
         return usableBalance;
     }
 

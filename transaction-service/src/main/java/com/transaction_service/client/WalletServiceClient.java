@@ -1,5 +1,6 @@
 package com.transaction_service.client;
 
+import com.transaction_service.config.WalletServiceClientConfig;
 import com.transaction_service.dto.WalletDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,12 +10,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 
-@FeignClient(name = "wallet-service", url = "${wallet.service.url}")
+@FeignClient(name = "wallet-service", url = "${wallet.service.url}", configuration = WalletServiceClientConfig.class)
 public interface WalletServiceClient {
 
-    @PutMapping("/wallets/{walletId}/balance")
+    @PutMapping("/api/wallets/{walletId}/balance")
     void updateBalance(@PathVariable("walletId") Long walletId, @RequestParam("balanceChange") BigDecimal balanceChange, @RequestParam("usableBalanceChange") BigDecimal usableBalanceChange);
 
-    @GetMapping("/wallets/id/{id}")
+    @GetMapping("/api/wallets/id/{id}")
     WalletDto getWalletById(@PathVariable("id") Long id);
 }

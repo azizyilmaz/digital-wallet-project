@@ -26,6 +26,12 @@ spring:
 server:
   port: 8082
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
 wallet:
   service:
     url: http://localhost:8081
