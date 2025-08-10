@@ -1,5 +1,6 @@
 package com.wallet_service.service;
 
+import com.wallet_service.client.CustomerServiceClient;
 import com.wallet_service.dto.WalletDto;
 import com.wallet_service.exception.NotFoundException;
 import com.wallet_service.mapper.WalletMapper;
@@ -16,17 +17,24 @@ public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
     private final WalletMapper walletMapper;
+    private final CustomerServiceClient customerServiceClient;
     private final AuthCheckService authCheckService;
 
-    public WalletServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper, AuthCheckService authCheckService) {
+    public WalletServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper, CustomerServiceClient customerServiceClient, AuthCheckService authCheckService) {
         this.walletRepository = walletRepository;
         this.walletMapper = walletMapper;
+        this.customerServiceClient = customerServiceClient;
         this.authCheckService = authCheckService;
     }
 
     @Override
     public WalletDto createWallet(WalletDto dto) {
         authCheckService.checkAuthorization(dto.getCustomerId());
+
+        // Is there any customer?
+        if (customerServiceClient.getCustomerById(dto.getCustomerId()).isEmpty()) {
+            throw new IllegalArgumentException("Customer not found with ID: " + dto.getCustomerId());
+        }
 
         Wallet wallet = walletMapper.toEntity(dto);
         return walletMapper.toDto(walletRepository.save(wallet));
@@ -57,7 +65,7 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     public WalletDto getWalletById(Long walletId) {
-        Wallet wallet = walletRepository.findById(walletId).orElseThrow(() -> new NotFoundException("Wallet not found for wallet id: " + walletId));
+        Wallet wallet = walletRepository.findById(walletId).orElseThrow(() -> new NotFoundException("Wallet not found for ID: " + walletId));
 
         authCheckService.checkAuthorization(wallet.getCustomerId());
 

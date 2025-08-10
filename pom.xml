@@ -12,6 +12,7 @@
     <modules>
         <module>wallet-service</module>
         <module>transaction-service</module>
+        <module>customer-service</module>
     </modules>
 
     <properties>
@@ -99,7 +100,7 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- MapStruct (isteğe bağlı – DTO/Entity dönüşümleri için) -->
+        <!-- MapStruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
@@ -117,7 +118,7 @@
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version> <!-- Spring Boot 2.x ile uyumlu -->
+            <version>3.1.0</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

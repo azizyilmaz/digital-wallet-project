@@ -1,6 +1,6 @@
 # digital-wallet-project
 
-This project is a multi-module Maven-based Spring Boot application managing digital wallet operations. It covers core features such as financial transactions, wallet management, user roles, and authentication.
+This project is a multi-module Maven-based Spring Boot application managing digital wallet operations. It covers core features such as financial transactions, customer management, wallet management, user roles, and authentication.
 
 ---
 
@@ -20,14 +20,15 @@ This project is a multi-module Maven-based Spring Boot application managing digi
 
 ## About the Project
 
-This project is a digital wallet platform built on a microservices architecture that enables users to create and manage wallets, perform balance operations, and execute financial transfers.
+This project is a digital wallet platform built on a microservices architecture that enables users to create and manage customers, create and manage wallets, perform balance operations, and execute financial transfers.
 
-Different modules (such as Wallet Service, Transaction Service) communicate with each other via REST and Feign Client. Security is enforced via role-based access control (Manually control at the application level, ie the service layer).
+Different modules (such as Customer Service, Wallet Service, Transaction Service) communicate with each other via REST and Feign Client. Security is enforced via role-based access control (Manually control at the application level, ie the service layer).
 
 ---
 
 ## Modules
 
+- **customer-service**: Handles customer creation, and customer inquiry.
 - **wallet-service**: Handles wallet creation, and balance inquiry.
 - **transaction-service**: Manages money transfer transactions.
 
@@ -95,13 +96,19 @@ Service (Interface + Impl) -> Feign Client (inter-service calls) -> Repository
 
 ## API Endpoints (Example)
 
+### Customer Service
+
+| Method | URL                                      | Description                          |
+|--------|------------------------------------------|--------------------------------------|
+| GET    | http://localhost:8083/api/customers/id/1 | Retrieves customer for a customer id |  
+| POST   | http://localhost:8083/api/customers      | Creates a new customer               |
+
 ### Wallet Service
 
 | Method | URL                                                                           | Description                        |
 |--------|-------------------------------------------------------------------------------|------------------------------------|
 | GET    | http://localhost:8081/api/wallets/filter?customerId=1&currency=EUR            | Retrieves wallets for a customer   |  
 | POST   | http://localhost:8081/api/wallets                                             | Creates a new wallet               |
-
 
 ### Transaction Service
 
@@ -110,6 +117,19 @@ Service (Interface + Impl) -> Feign Client (inter-service calls) -> Repository
 | POST   | http://localhost:8082/api/transactions/deposit                                | Updates wallet balance (deposit)   |
 | POST   | http://localhost:8082/api/transactions/withdraw                               | Updates wallet balance (withdraw)  |
 | GET    | http://localhost:8082/api/transactions/filter?iban=TR123456789012345678901234 | Retrieves transactions for IBAN    |  
+
+Authorization->
+
+Basic Auth->
+
+Username: admin
+Password: admin123
+
+Headers->
+
+X-User-Id: customer id
+
+X-User-Role: "customer" or "employee"
 
 ---
 
@@ -120,6 +140,15 @@ Service (Interface + Impl) -> Feign Client (inter-service calls) -> Repository
 - **Repository**: Performs database operations.
 - **DTOs**: Data transfer objects used for communication between layers and services.
 - **Security**: Provides user authorization with manually control at the application level.
+
+---
+
+## For Future Expansion
+
+- **common/**: Classes like DTO, enum, exception, and config used by all services are here. Services like customer-service, wallet-service, and transaction-service add this module as a dependency.
+- **api-gateway/**: The place where all requests are directed (Routing).
+- **auth-service/**: Role-based access is provided here. Creating and checking JWT tokens, and checking user roles.
+- **monitoring/**: Spring Boot Actuator + Micrometer. System health, traffic, log level, and endpoint usage.
 
 ---
 
