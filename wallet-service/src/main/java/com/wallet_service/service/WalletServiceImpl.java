@@ -16,18 +16,23 @@ public class WalletServiceImpl implements WalletService {
 
     private final WalletRepository walletRepository;
     private final WalletMapper walletMapper;
+    private final AuthCheckService authCheckService;
 
-    public WalletServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper) {
+    public WalletServiceImpl(WalletRepository walletRepository, WalletMapper walletMapper, AuthCheckService authCheckService) {
         this.walletRepository = walletRepository;
         this.walletMapper = walletMapper;
+        this.authCheckService = authCheckService;
     }
 
     @Override
     public WalletDto createWallet(WalletDto dto) {
+        authCheckService.checkAuthorization(dto.getCustomerId());
+
         Wallet wallet = walletMapper.toEntity(dto);
         return walletMapper.toDto(walletRepository.save(wallet));
     }
 
+    // This method is used for my check, not for employee or customer.
     @Override
     public List<WalletDto> getAllWallets() {
         return walletRepository.findAll().stream().map(walletMapper::toDto).collect(Collectors.toList());
@@ -35,6 +40,9 @@ public class WalletServiceImpl implements WalletService {
 
     @Override
     public List<WalletDto> getWalletsByCustomerAndFilter(Long customerId, String currency, BigDecimal minAmount, BigDecimal maxAmount) {
+
+        authCheckService.checkAuthorization(customerId);
+
         Wallet.Currency currencyEnum = null;
         if (currency != null) {
             try {
@@ -50,6 +58,9 @@ public class WalletServiceImpl implements WalletService {
     @Override
     public WalletDto getWalletById(Long walletId) {
         Wallet wallet = walletRepository.findById(walletId).orElseThrow(() -> new NotFoundException("Wallet not found for wallet id: " + walletId));
+
+        authCheckService.checkAuthorization(wallet.getCustomerId());
+
         return walletMapper.toDto(wallet);
     }
 
@@ -57,6 +68,8 @@ public class WalletServiceImpl implements WalletService {
     public void updateBalance(Long walletId, BigDecimal balanceChange, BigDecimal usableBalanceChange) {
         Wallet wallet = walletRepository.findById(walletId)
                 .orElseThrow(() -> new RuntimeException("Wallet not found with id: " + walletId));
+
+        authCheckService.checkAuthorization(wallet.getCustomerId());
 
         // balance change
         if (balanceChange != null && balanceChange.compareTo(BigDecimal.ZERO) != 0) {

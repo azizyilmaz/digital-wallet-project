@@ -26,22 +26,27 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final WalletServiceClient walletServiceClient;
+    private final AuthCheckService authCheckService;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper, WalletServiceClient walletServiceClient) {
+    public TransactionServiceImpl(TransactionRepository transactionRepository, TransactionMapper transactionMapper, WalletServiceClient walletServiceClient, AuthCheckService authCheckService) {
         this.transactionRepository = transactionRepository;
         this.transactionMapper = transactionMapper;
         this.walletServiceClient = walletServiceClient;
+        this.authCheckService = authCheckService;
     }
 
     @Override
     @Transactional
     public TransactionDto deposit(TransactionDto dto) {
+
         validateAmount(dto.getAmount());
 
         WalletDto wallet = walletServiceClient.getWalletById(dto.getWalletId());
         if (wallet == null) {
             throw new NotFoundException("Wallet not found for wallet id: " + dto.getWalletId());
         }
+
+        authCheckService.checkAuthorization(wallet.getCustomerId());
 
         TransactionStatus status = dto.getAmount().compareTo(THRESHOLD) > 0 ? TransactionStatus.PENDING : TransactionStatus.APPROVED;
 
@@ -71,6 +76,8 @@ public class TransactionServiceImpl implements TransactionService {
         if (wallet == null) {
             throw new NotFoundException("Wallet not found for wallet id: " + dto.getWalletId());
         }
+
+        authCheckService.checkAuthorization(wallet.getCustomerId());
 
         // Active control
         if (!wallet.isActiveForWithdraw()) {
@@ -115,6 +122,8 @@ public class TransactionServiceImpl implements TransactionService {
         WalletDto wallet = walletServiceClient.getWalletById(tx.getWalletId());
         if (wallet == null) throw new NotFoundException("Wallet not found for wallet id: " + tx.getIban());
 
+        authCheckService.checkAuthorization(wallet.getCustomerId());
+
         if (tx.getType() == TransactionType.DEPOSIT) {
             walletServiceClient.updateBalance(wallet.getId(), BigDecimal.ZERO, tx.getAmount());
         } else { // WITHDRAW
@@ -140,7 +149,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         // tx is PENDING (only PENDING can be rejected in our flow)
         WalletDto wallet = walletServiceClient.getWalletById(tx.getWalletId());
-        if (wallet == null) throw new NotFoundException("Wallet not found for wallet id: " + tx.getIban());
+        if (wallet == null) throw new NotFoundException("Wallet not found for wallet id: " + tx.getWalletId());
+
+        authCheckService.checkAuthorization(wallet.getCustomerId());
 
         if (tx.getType() == TransactionType.DEPOSIT) {
             // PENDING deposit: at creation we increased balance. On reject, reduce balance.
@@ -155,6 +166,7 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionMapper.toDto(transactionRepository.save(tx));
     }
 
+    // This method is used for my check, not for employee or customer.
     @Override
     public List<TransactionDto> listByIban(String iban) {
         List<Transaction> transactions = transactionRepository.findByIbanOrderByCreatedAtDesc(iban);

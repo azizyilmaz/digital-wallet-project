@@ -1,4 +1,4 @@
-package com.transaction_service.config;
+package com.wallet_service.config;
 
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +11,7 @@ import java.util.Base64;
 public class WalletServiceClientConfig {
 
     @Bean
-    public RequestInterceptor requestInterceptor() {
+    public RequestInterceptor requestWalletInterceptor() {
         return requestTemplate -> {
             String basicAuthHeader = "Basic " + Base64.getEncoder().encodeToString(("admin:admin123").getBytes(StandardCharsets.UTF_8));
             requestTemplate.header("Authorization", basicAuthHeader);

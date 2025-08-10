@@ -1,5 +1,6 @@
 package com.transaction_service.dto;
 
+import com.transaction_service.enums.Currency;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -8,11 +9,13 @@ import java.math.BigDecimal;
 public class WalletDto {
 
     private Long id;
-    private String iban;
+    private String walletName;
+    private Currency currency;
+    private boolean activeForShopping;
+    private boolean activeForWithdraw;
     private BigDecimal balance;
     private BigDecimal usableBalance;
-    private boolean activeForWithdraw;
-    private boolean activeForShopping;
+    private Long customerId;
 
     public Long getId() {
         return id;
@@ -22,12 +25,36 @@ public class WalletDto {
         this.id = id;
     }
 
-    public String getIban() {
-        return iban;
+    public String getWalletName() {
+        return walletName;
     }
 
-    public void setIban(String iban) {
-        this.iban = iban;
+    public void setWalletName(String walletName) {
+        this.walletName = walletName;
+    }
+
+    public Currency getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(Currency currency) {
+        this.currency = currency;
+    }
+
+    public boolean isActiveForShopping() {
+        return activeForShopping;
+    }
+
+    public void setActiveForShopping(boolean activeForShopping) {
+        this.activeForShopping = activeForShopping;
+    }
+
+    public boolean isActiveForWithdraw() {
+        return activeForWithdraw;
+    }
+
+    public void setActiveForWithdraw(boolean activeForWithdraw) {
+        this.activeForWithdraw = activeForWithdraw;
     }
 
     public BigDecimal getBalance() {
@@ -46,19 +73,11 @@ public class WalletDto {
         this.usableBalance = usableBalance;
     }
 
-    public boolean isActiveForWithdraw() {
-        return activeForWithdraw;
+    public Long getCustomerId() {
+        return customerId;
     }
 
-    public void setActiveForWithdraw(boolean activeForWithdraw) {
-        this.activeForWithdraw = activeForWithdraw;
-    }
-
-    public boolean isActiveForShopping() {
-        return activeForShopping;
-    }
-
-    public void setActiveForShopping(boolean activeForShopping) {
-        this.activeForShopping = activeForShopping;
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
     }
 }
